@@ -15,7 +15,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
   constructor(private readonly gameService: GameService) {
+    // Ensure server is set after initialization
     this.gameService.setServer(this.server);
+  }
+
+  afterInit(server: Server) {
+    // Set server instance after gateway initialization
+    this.gameService.setServer(server);
   }
 
   handleConnection(client: Socket) {
@@ -36,7 +42,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.gameService.checkGameStart();
   }
 
+  @SubscribeMessage('reset_game')
+  handleResetGame(@ConnectedSocket() client: Socket) {
+    console.log(`Reset game requested by client: ${client.id}`);
+    this.gameService.resetGame();
+    this.broadcastPlayerUpdate();
+  }
+
   private broadcastPlayerUpdate() {
-    this.server.emit('player_update', this.gameService.getPlayers());
+    if (this.server) {
+      this.server.emit('player_update', this.gameService.getPlayers());
+    } else {
+      console.error('Server instance not available for broadcast');
+    }
   }
 }

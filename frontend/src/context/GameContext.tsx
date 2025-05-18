@@ -21,6 +21,7 @@ interface GameState {
 interface GameContextType {
   gameState: GameState;
   joinGame: (username: string) => void;
+  socket: Socket | null;
 }
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -56,9 +57,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         console.error('WebSocket connection error:', error);
       });
 
+      newSocket.on('disconnect', (reason) => {
+        console.log('WebSocket disconnected:', reason);
+      });
+
       newSocket.on('player_update', (players: Player[]) => {
         console.log('Received player_update:', players);
-        setGameState((prev) => ({ ...prev, players }));
+        setGameState((prev) => ({
+          ...prev,
+          players,
+          gameOver: false,
+          status: prev.gameOver ? 'Waiting for players...' : prev.status,
+        }));
       });
 
       newSocket.on('game_start', ({ totalRounds }) => {
@@ -66,6 +76,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         setGameState((prev) => ({
           ...prev,
           totalRounds,
+          currentRound: 0,
+          spinning: false,
+          gameOver: false,
           status: 'Game starting...',
         }));
       });
@@ -119,7 +132,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <GameContext.Provider value={{ gameState, joinGame }}>
+    <GameContext.Provider value={{ gameState, joinGame, socket }}>
       {children}
     </GameContext.Provider>
   );

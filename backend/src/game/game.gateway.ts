@@ -5,6 +5,7 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
@@ -28,7 +29,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join')
-  handleJoin(@MessageBody() username: string, client: Socket) {
+  handleJoin(@MessageBody() username: string, @ConnectedSocket() client: Socket) {
+    console.log(`Client joining with ID: ${client.id}, Username: ${username}`);
     this.gameService.setPlayerUsername(client.id, username);
     this.broadcastPlayerUpdate();
     this.gameService.checkGameStart();

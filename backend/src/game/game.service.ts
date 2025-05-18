@@ -12,6 +12,7 @@ export class GameService {
 
   constructor() {
     this.resetGame();
+    console.log('GameService initialized with clean state');
   }
 
   setServer(server: Server) {
@@ -20,10 +21,12 @@ export class GameService {
 
   addPlayer(client: Socket) {
     this.players.set(client.id, { username: `Player_${client.id.slice(0, 4)}`, score: 0 });
+    console.log(`Player added: ${client.id}, Total players: ${this.players.size}`);
   }
 
   removePlayer(clientId: string) {
     this.players.delete(clientId);
+    console.log(`Player removed: ${clientId}, Total players: ${this.players.size}`);
   }
 
   setPlayerUsername(clientId: string, username: string) {
@@ -33,6 +36,7 @@ export class GameService {
       return;
     }
     this.players.set(clientId, { ...player, username });
+    console.log(`Username set for ${clientId}: ${username}`);
   }
 
   getPlayers() {
@@ -47,6 +51,10 @@ export class GameService {
     console.log(`Checking game start: players=${this.players.size}, gameStarted=${this.gameStarted}`);
     if (!this.gameStarted && this.players.size >= this.minPlayers) {
       this.startGame();
+    } else if (this.players.size < this.minPlayers) {
+      console.log(`Not enough players to start (need ${this.minPlayers}, have ${this.players.size})`);
+    } else if (this.gameStarted) {
+      console.log('Game already started, waiting for next round or reset');
     }
   }
 
@@ -76,6 +84,8 @@ export class GameService {
       score: winner.score + 1,
     });
 
+    console.log(`Round ${this.currentRound} winner: ${winner.username}, New score: ${winner.score + 1}`);
+
     this.emit('round_result', {
       winner: winner.username,
       scores: this.getPlayers(),
@@ -97,6 +107,7 @@ export class GameService {
     }
     const maxScore = Math.max(...players.map((p) => p.score));
     const winners = players.filter((p) => p.score === maxScore).map((p) => p.username);
+    console.log(`Game over! Winner(s): ${winners.join(', ')}`);
     this.emit('game_over', { scores: players, winners });
     this.resetGame();
   }
@@ -113,6 +124,7 @@ export class GameService {
   private emit(event: string, data: any) {
     if (this.server) {
       this.server.emit(event, data);
+      console.log(`Emitted event: ${event}`, data);
     } else {
       console.error('Server instance not set for emitting events');
     }

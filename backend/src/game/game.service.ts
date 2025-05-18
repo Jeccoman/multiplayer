@@ -17,6 +17,7 @@ export class GameService {
 
   setServer(server: Server) {
     this.server = server;
+    console.log('Server instance set in GameService');
   }
 
   addPlayer(client: Socket) {
@@ -112,7 +113,7 @@ export class GameService {
     this.resetGame();
   }
 
-  private resetGame() {
+  public resetGame() { // Changed from private to public
     console.log('Resetting game state...');
     this.gameStarted = false;
     this.currentRound = 0;

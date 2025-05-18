@@ -11,7 +11,7 @@ export class GameService {
   private server: Server;
 
   constructor() {
-    this.resetGame(); // Ensure clean state on startup
+    this.resetGame();
   }
 
   setServer(server: Server) {
@@ -28,9 +28,11 @@ export class GameService {
 
   setPlayerUsername(clientId: string, username: string) {
     const player = this.players.get(clientId);
-    if (player) {
-      this.players.set(clientId, { ...player, username });
+    if (!player) {
+      console.error(`Player with ID ${clientId} not found`);
+      return;
     }
+    this.players.set(clientId, { ...player, username });
   }
 
   getPlayers() {
